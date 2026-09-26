@@ -67,21 +67,17 @@
     <select id="bano"></select>
   </div>
 
-  <div class="tabs">
-    <button class="tab on" id="tabPedido" onclick="modo('pedido')">🧴 Pedir insumos</button>
-    <button class="tab rep" id="tabRep" onclick="modo('reporte')">⚠️ Avisar problema</button>
-  </div>
-
   <div class="card" id="bloquePedido">
-    <h2>3. Marcá lo que falta</h2>
+    <h2>3. 🧴 ¿Falta algo?</h2>
     <div class="opciones" id="listaInsumos"></div>
     <label for="obsPedido">Observaciones (opcional)</label>
     <textarea id="obsPedido"></textarea>
   </div>
 
-  <div class="card oculto" id="bloqueRep">
-    <h2>3. ¿Qué pasa?</h2>
+  <div class="card" id="bloqueRep">
+    <h2>4. ⚠️ ¿Hay algún problema?</h2>
     <div class="opciones" id="listaProblemas"></div>
+   <div id="extraRep" class="oculto">
     <label>¿Qué tan urgente?</label>
     <div class="urg">
       <button class="op" data-u="Normal" onclick="urgencia(this)">Normal</button>
@@ -93,14 +89,16 @@
     <label class="foto" for="foto">📷 Sacar o elegir foto</label>
     <input id="foto" type="file" accept="image/*" capture="environment" class="oculto">
     <div id="fotoPrev" class="oculto"><img id="fotoImg" alt=""><button type="button" class="quitar" onclick="quitarFoto()">✕ Quitar foto</button></div>
+   </div>
   </div>
+  <p class="aviso" style="margin-top:-6px;margin-bottom:12px">Podés marcar faltantes, problemas o las dos cosas.</p>
 
   <button class="btn enviar" id="btnEnviar" onclick="enviar()" disabled>Enviar</button>
  </div>
 
  <div id="resultado" class="oculto">
   <div id="mensajes"></div>
-  <button class="btn wa oculto" id="btnWa">Avisar al grupo por WhatsApp</button>
+  <button class="btn wa oculto" id="btnWa">Enviar aviso por WhatsApp</button>
   <button class="btn sec" onclick="location.reload()">Hacer otro pedido</button>
   <p class="aviso" id="avisoWa"></p>
  </div>
@@ -109,7 +107,7 @@
 <script>
 // ═══════════ CONFIGURACIÓN (editar acá) ═══════════
 var URL_SCRIPT = 'https://script.google.com/macros/s/AKfycbysGQAA_KsOFzab5sl_k_jVPwvu0H4Ww14JUZh2DCOFKDcbC8sB1DqYlsPcbLDfTqCM/exec';  // termina en /exec
-var WHATSAPP = '';   // vacío = WhatsApp deja elegir el chat/grupo. O un número: 549XXXXXXXXXX
+var WHATSAPP = '5491164101134';   // número al que llega el aviso (formato 549 + área + número)
 
 var BANOS = [
   "Baño y vestuario General – Operarios",
@@ -137,7 +135,7 @@ var PERSONAL = [["ZZ00074", "Tude, Erica Beatriz", "GERENCIA DE FABRICA"], ["ZZ0
 
 // ═══════════════════════════════════════════════════
 
-var modoActual='pedido', insSel={}, probSel={}, urg='', persona=null, fotoData='';
+var insSel={}, probSel={}, urg='', persona=null, fotoData='';
 
 // Foto: se achica a 1280px y se comprime antes de enviar
 $('foto').addEventListener('change',function(){
@@ -160,25 +158,21 @@ $('bano').innerHTML='<option value="">— Elegí el baño —</option>'+BANOS.ma
 $('listaInsumos').innerHTML=INSUMOS.map(function(n,i){return '<button class="op" id="i'+i+'" onclick="marcar(insSel,\'i\','+i+')">'+n+'</button>'}).join('');
 $('listaProblemas').innerHTML=PROBLEMAS.map(function(p,i){return '<button class="op" id="p'+i+'" onclick="marcar(probSel,\'p\','+i+')">'+p+'</button>'}).join('');
 
-function marcar(obj,pref,i){ obj[i]=!obj[i]; $(pref+i).classList.toggle('on',obj[i]); validar(); }
+function marcar(obj,pref,i){
+  obj[i]=!obj[i]; $(pref+i).classList.toggle('on',obj[i]);
+  $('extraRep').classList.toggle('oculto',!elegidos(PROBLEMAS,probSel).length);
+  validar();
+}
 function urgencia(el){
   document.querySelectorAll('.urg .op').forEach(function(b){b.classList.remove('on')});
   el.classList.add('on'); urg=el.dataset.u; validar();
-}
-function modo(m){
-  modoActual=m;
-  $('tabPedido').classList.toggle('on',m==='pedido');
-  $('tabRep').classList.toggle('on',m==='reporte');
-  $('bloquePedido').classList.toggle('oculto',m!=='pedido');
-  $('bloqueRep').classList.toggle('oculto',m!=='reporte');
-  validar();
 }
 function elegidos(lista,sel){ return lista.filter(function(_,i){return sel[i]}); }
 
 function validar(){
   var ok=persona && $('bano').value;
-  if(modoActual==='pedido') ok=ok && elegidos(INSUMOS,insSel).length;
-  else ok=ok && elegidos(PROBLEMAS,probSel).length && urg;
+  var ni=elegidos(INSUMOS,insSel).length, np=elegidos(PROBLEMAS,probSel).length;
+  ok=ok && (ni||np) && (!np||urg);
   $('btnEnviar').disabled=!ok;
 }
 $('bano').addEventListener('change',validar);
@@ -204,16 +198,16 @@ function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp
 function dos(n){return (n<10?'0':'')+n}
 
 function enviar(){
-  var pedido=modoActual==='pedido';
+  var ins=elegidos(INSUMOS,insSel), prob=elegidos(PROBLEMAS,probSel);
   var datos={
-    tipo: pedido?'Pedido':'Problema',
     bano: $('bano').value,
-    items: pedido?elegidos(INSUMOS,insSel):elegidos(PROBLEMAS,probSel),
-    urgencia: pedido?'':urg,
+    items: ins.map(function(i){return {i:i,t:'Pedido'}}).concat(prob.map(function(i){return {i:i,t:'Problema'}})),
+    urgencia: prob.length?urg:'',
     nombre: persona[0]==='PORTERIA'?'Portería':persona[1]+' ('+persona[0]+')',
     sector: persona[2],
-    detalle: (pedido?$('obsPedido'):$('detalle')).value.trim(),
-    foto: pedido?'':fotoData
+    obs: $('obsPedido').value.trim(),
+    detalle: prob.length?$('detalle').value.trim():'',
+    foto: prob.length?fotoData:''
   };
   var b=$('btnEnviar'); b.disabled=true; b.textContent='Enviando…';
 
@@ -241,7 +235,8 @@ function mostrar(datos,res){
     h+='<div class="msg ok"><b>✅ Registrado:</b><br>'+res.nuevos.map(function(n){return '• '+esc(n)}).join('<br>')+'</div>';
     $('btnWa').classList.remove('oculto');
     $('btnWa').onclick=function(){ abrirWa(datos,res.nuevos); };
-    $('avisoWa').textContent='Tocá el botón verde para avisar al grupo.';
+    if(!res.repetidos.length){ $('avisoWa').textContent='Abriendo WhatsApp…'; setTimeout(function(){ abrirWa(datos,res.nuevos); },600); }
+    else $('avisoWa').textContent='Tocá el botón verde para enviar el aviso de lo nuevo.';
   }
   $('mensajes').innerHTML=h;
   $('form').classList.add('oculto');
@@ -251,17 +246,24 @@ function mostrar(datos,res){
 
 function abrirWa(datos,nuevos){
   var d=new Date(), L=[];
-  var pedido=datos.tipo==='Pedido';
-  L.push(pedido?'*PEDIDO HIGIENE BAÑOS*':((datos.urgencia==='URGENTE'?'🚨 ':'')+'*AVISO PROBLEMA BAÑO*'));
+  var falta=[], prob=[];
+  datos.items.forEach(function(x){ if(nuevos.indexOf(x.i)>=0) (x.t==='Pedido'?falta:prob).push(x.i); });
+  L.push((prob.length&&datos.urgencia==='URGENTE'?'🚨 ':'')+'*BAÑOS · AKAPOL*');
   L.push('Fecha: '+dos(d.getDate())+'/'+dos(d.getMonth()+1)+'/'+d.getFullYear()+' '+dos(d.getHours())+':'+dos(d.getMinutes()));
   L.push('Nombre: '+datos.nombre);
   L.push('Sector: '+datos.sector);
   L.push('Baño: '+datos.bano);
-  if(!pedido) L.push('Urgencia: '+datos.urgencia);
-  L.push('');
-  nuevos.forEach(function(n){L.push('- '+n)});
-  if(datos.detalle){ L.push(''); L.push((pedido?'Obs: ':'Detalle: ')+datos.detalle); }
-  if(datos.fotoUrl){ L.push(''); L.push('Foto: '+datos.fotoUrl); }
+  if(falta.length){
+    L.push(''); L.push('*🧴 Falta:*');
+    falta.forEach(function(n){L.push('- '+n)});
+    if(datos.obs) L.push('Obs: '+datos.obs);
+  }
+  if(prob.length){
+    L.push(''); L.push('*⚠️ Problema ('+datos.urgencia+'):*');
+    prob.forEach(function(n){L.push('- '+n)});
+    if(datos.detalle) L.push('Detalle: '+datos.detalle);
+    if(datos.fotoUrl) L.push('Foto: '+datos.fotoUrl);
+  }
   location.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(L.join('\n'));
 }
 </script>
