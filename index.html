@@ -44,6 +44,11 @@
   .foto{display:block;text-align:center;padding:12px;border:2px dashed var(--borde);border-radius:10px;color:var(--az);font-weight:600;cursor:pointer;margin:0}
   #fotoPrev img{width:100%;max-height:240px;object-fit:contain;border-radius:8px;margin-top:8px;background:#eee}
   .quitar{margin-top:6px;border:0;background:none;color:var(--rojo);font-size:.9rem;cursor:pointer}
+  .pedbtn{background:#fff;color:var(--az);border:2px solid var(--az);margin-bottom:10px}
+  .elegir{font-size:.95rem;font-weight:700;color:var(--az);margin:4px 2px 8px}
+  .repbtn{background:#fff;color:var(--rojo);border:2px solid var(--rojo);margin-bottom:14px}
+  .rephead{display:flex;justify-content:space-between;align-items:flex-start}
+  .cerrar{border:0;background:none;color:var(--gris);font-size:.85rem;cursor:pointer;padding:0}
   .oculto{display:none}
 </style>
 </head>
@@ -67,15 +72,18 @@
     <select id="bano"></select>
   </div>
 
-  <div class="card" id="bloquePedido">
-    <h2>3. 🧴 ¿Falta algo?</h2>
+  <p class="elegir" id="txtElegir">3. ¿Qué querés avisar?</p>
+  <button type="button" class="btn pedbtn" id="btnPed" onclick="abrirPed(true)">🧴 Falta algo (papel, jabón…)</button>
+  <div class="card oculto" id="bloquePedido">
+    <div class="rephead"><h2>🧴 ¿Qué falta?</h2><button type="button" class="cerrar" onclick="abrirPed(false)">✕ Cancelar</button></div>
     <div class="opciones" id="listaInsumos"></div>
     <label for="obsPedido">Observaciones (opcional)</label>
     <textarea id="obsPedido"></textarea>
   </div>
 
-  <div class="card" id="bloqueRep">
-    <h2>4. ⚠️ ¿Hay algún problema?</h2>
+  <button type="button" class="btn repbtn" id="btnRep" onclick="abrirRep(true)">⚠️ Reportar un problema en el baño</button>
+  <div class="card oculto" id="bloqueRep">
+    <div class="rephead"><h2>⚠️ ¿Qué problema hay?</h2><button type="button" class="cerrar" onclick="abrirRep(false)">✕ Cancelar</button></div>
     <div class="opciones" id="listaProblemas"></div>
    <div id="extraRep" class="oculto">
     <label>¿Qué tan urgente?</label>
@@ -91,7 +99,7 @@
     <div id="fotoPrev" class="oculto"><img id="fotoImg" alt=""><button type="button" class="quitar" onclick="quitarFoto()">✕ Quitar foto</button></div>
    </div>
   </div>
-  <p class="aviso" style="margin-top:-6px;margin-bottom:12px">Podés marcar faltantes, problemas o las dos cosas.</p>
+
 
   <button class="btn enviar" id="btnEnviar" onclick="enviar()" disabled>Enviar</button>
  </div>
@@ -161,6 +169,25 @@ $('listaProblemas').innerHTML=PROBLEMAS.map(function(p,i){return '<button class=
 function marcar(obj,pref,i){
   obj[i]=!obj[i]; $(pref+i).classList.toggle('on',obj[i]);
   $('extraRep').classList.toggle('oculto',!elegidos(PROBLEMAS,probSel).length);
+  validar();
+}
+function abrirPed(on){
+  $('bloquePedido').classList.toggle('oculto',!on);
+  $('btnPed').classList.toggle('oculto',on);
+  if(!on){
+    insSel={}; $('obsPedido').value='';
+    document.querySelectorAll('#bloquePedido .op').forEach(function(b){b.classList.remove('on')});
+  }
+  validar();
+}
+function abrirRep(on){
+  $('bloqueRep').classList.toggle('oculto',!on);
+  $('btnRep').classList.toggle('oculto',on);
+  if(!on){
+    probSel={}; urg=''; quitarFoto(); $('detalle').value='';
+    document.querySelectorAll('#bloqueRep .op').forEach(function(b){b.classList.remove('on')});
+    $('extraRep').classList.add('oculto');
+  }
   validar();
 }
 function urgencia(el){
