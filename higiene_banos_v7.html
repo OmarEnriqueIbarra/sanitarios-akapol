@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baños · Akapol</title>
+<style>
+  :root{--az:#0b3d91;--az2:#e8eef9;--rojo:#c62828;--rojo2:#fdecea;--amar:#8a6d00;--amar2:#fff6d6;--gris:#666;--borde:#d6dbe4}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f3f5f9;color:#222}
+  header{background:var(--az);color:#fff;padding:16px;text-align:center}
+  header h1{margin:0;font-size:1.2rem}
+  header p{margin:4px 0 0;font-size:.85rem;opacity:.85}
+  main{max-width:520px;margin:0 auto;padding:14px}
+  .card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:1rem;color:var(--az)}
+  label{display:block;font-size:.85rem;color:var(--gris);margin:8px 0 4px}
+  input,select,textarea{width:100%;padding:10px;border:1px solid var(--borde);border-radius:8px;font-size:1rem;font-family:inherit}
+  textarea{min-height:70px;resize:vertical}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{flex:1;padding:12px 6px;border:2px solid var(--az);background:#fff;color:var(--az);border-radius:10px;font-weight:600;font-size:.95rem;cursor:pointer}
+  .tab.on{background:var(--az);color:#fff}
+  .tab.rep{border-color:var(--rojo);color:var(--rojo)}
+  .tab.rep.on{background:var(--rojo);color:#fff}
+  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .op{padding:12px 8px;border:2px solid var(--borde);border-radius:10px;background:#fff;font-size:.9rem;cursor:pointer;text-align:center}
+  .op.on{border-color:var(--az);background:var(--az2);color:var(--az);font-weight:600}
+  #bloqueRep .op.on{border-color:var(--rojo);background:var(--rojo2);color:var(--rojo)}
+  .urg{display:flex;gap:8px;margin-top:4px}
+  .urg .op{flex:1}
+  .btn{width:100%;padding:14px;border:0;border-radius:10px;font-size:1.05rem;font-weight:700;cursor:pointer}
+  .enviar{background:var(--az);color:#fff}
+  .wa{background:#25d366;color:#fff;margin-top:10px}
+  .sec{background:#fff;color:var(--az);border:2px solid var(--az);margin-top:10px}
+  .btn:disabled{background:#b7c2b9;color:#fff;cursor:not-allowed}
+  .aviso{font-size:.8rem;color:var(--gris);text-align:center;margin-top:8px}
+  .msg{border-radius:10px;padding:12px;margin-bottom:10px;font-size:.95rem;line-height:1.4}
+  .msg.ok{background:#e8f5e9;color:#2e7d32}
+  .msg.rep{background:var(--amar2);color:var(--amar)}
+  .msg.err{background:var(--rojo2);color:var(--rojo)}
+  .persona{margin-top:10px;padding:10px;border-radius:8px;font-size:.95rem}
+  .persona.ok{background:var(--az2);color:var(--az)}
+  .persona.no{background:var(--rojo2);color:var(--rojo)}
+  .foto{display:block;text-align:center;padding:12px;border:2px dashed var(--borde);border-radius:10px;color:var(--az);font-weight:600;cursor:pointer;margin:0}
+  #fotoPrev img{width:100%;max-height:240px;object-fit:contain;border-radius:8px;margin-top:8px;background:#eee}
+  .quitar{margin-top:6px;border:0;background:none;color:var(--rojo);font-size:.9rem;cursor:pointer}
+  .oculto{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧻 Baños de planta</h1>
+  <p>Pedido de elementos de higiene · Aviso de problemas</p>
+</header>
+
+<main>
+ <div id="form">
+  <div class="card">
+    <h2>1. Tus datos</h2>
+    <label for="legajo">Número de legajo</label>
+    <input id="legajo" placeholder="Ej: 1604" autocomplete="off" autocapitalize="off">
+    <div id="persona" class="persona oculto"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. ¿Qué baño?</h2>
+    <select id="bano"></select>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tabPedido" onclick="modo('pedido')">🧴 Pedir insumos</button>
+    <button class="tab rep" id="tabRep" onclick="modo('reporte')">⚠️ Avisar problema</button>
+  </div>
+
+  <div class="card" id="bloquePedido">
+    <h2>3. Marcá lo que falta</h2>
+    <div class="opciones" id="listaInsumos"></div>
+    <label for="obsPedido">Observaciones (opcional)</label>
+    <textarea id="obsPedido"></textarea>
+  </div>
+
+  <div class="card oculto" id="bloqueRep">
+    <h2>3. ¿Qué pasa?</h2>
+    <div class="opciones" id="listaProblemas"></div>
+    <label>¿Qué tan urgente?</label>
+    <div class="urg">
+      <button class="op" data-u="Normal" onclick="urgencia(this)">Normal</button>
+      <button class="op" data-u="URGENTE" onclick="urgencia(this)">🚨 Urgente</button>
+    </div>
+    <label for="detalle">Detalle (dónde, qué se ve)</label>
+    <textarea id="detalle" placeholder="Ej: pierde agua la canilla del lavatorio del medio"></textarea>
+    <label>Foto (opcional)</label>
+    <label class="foto" for="foto">📷 Sacar o elegir foto</label>
+    <input id="foto" type="file" accept="image/*" capture="environment" class="oculto">
+    <div id="fotoPrev" class="oculto"><img id="fotoImg" alt=""><button type="button" class="quitar" onclick="quitarFoto()">✕ Quitar foto</button></div>
+  </div>
+
+  <button class="btn enviar" id="btnEnviar" onclick="enviar()" disabled>Enviar</button>
+ </div>
+
+ <div id="resultado" class="oculto">
+  <div id="mensajes"></div>
+  <button class="btn wa oculto" id="btnWa">Avisar al grupo por WhatsApp</button>
+  <button class="btn sec" onclick="location.reload()">Hacer otro pedido</button>
+  <p class="aviso" id="avisoWa"></p>
+ </div>
+</main>
+
+<script>
+// ═══════════ CONFIGURACIÓN (editar acá) ═══════════
+var URL_SCRIPT = 'https://script.google.com/macros/s/AKfycbysGQAA_KsOFzab5sl_k_jVPwvu0H4Ww14JUZh2DCOFKDcbC8sB1DqYlsPcbLDfTqCM/exec';  // termina en /exec
+var WHATSAPP = '';   // vacío = WhatsApp deja elegir el chat/grupo. O un número: 549XXXXXXXXXX
+
+var BANOS = [
+  "Baño y vestuario General – Operarios",
+  "Baño y vestuario General – Operarias",
+  "Baño y vestuario – Supervisores",
+  "Baño y vestuario – Supervisoras",
+  "Baño Hall Gerencia – Mujeres",
+  "Baño Hall Gerencia – Hombre",
+  "Baño Gerencia – Mujeres",
+  "Baño Gerencia – Hombre",
+  "Baño Oficina Abajo – Pomos",
+  "Baño Oficina Arriba – Pomos",
+  "Baño – Zona Limpia",
+  "Baño Oficina – Expedicion",
+  "Baño Operarios – Expedicion",
+  "Baño – Porteria",
+  "Baño Camionero – Almacenes",
+  "Baño Camionero – Expedicion",
+  "Baño y vestuario – Comedor"
+];
+var INSUMOS = ['Servilletas / toallas de papel','Papel higiénico','Jabón','Desodorante de ambientes','Desinfectante'];
+var PROBLEMAS = ['Pérdida de agua','Inodoro tapado','Mingitorio tapado','Lavatorio tapado','Otro'];
+// Personal: [legajo, nombre, sector]
+var PERSONAL = [["ZZ00074", "Tude, Erica Beatriz", "GERENCIA DE FABRICA"], ["ZZ00169", "Ballerini, Luis Alberto", "POMOS"], ["ZZ00715", "Almiron, Jose Omar", "ENVASADO Y EMPAQUE"], ["ZZ00826", "Zelaya, Jorge Alberto", "ADM.RECEP.ALMAC.ND"], ["ZZ00882", "Migueles, Oscar Ruben", "ADM.CONTROL CALID.ND"], ["ZZ00887", "Leiva, Carlos Roberto", "POMOS"], ["ZZ00912", "Dome, Juan Jose", "ADHESIVOS/ANEXOS ND"], ["ZZ00924", "Bucciarelli, Luis Antonio", "ADM.CONTROL CALID.ND"], ["ZZ00927", "Martinez, Rene Roberto", "ENVASADO Y EMPAQUE"], ["ZZ00949", "Hill, Jorge Alberto", "ADM.RECEP.ALMAC.ND"], ["ZZ00975", "Parenti, Esteban Vicente", "FORMULADO"], ["ZZ00984", "Uñates, Gustavo Alberto", "FORMULADO"], ["ZZ01036", "Marchesse, Adrian Fabio", "POMOS"], ["ZZ01038", "Mañanes, Cristian Ruben", "ADHESIVOS/ANEXOS ND"], ["ZZ01042", "Castillo, Francisco Miguel", "POMOS"], ["ZZ01077", "Camaño, Gustavo Gabriel", "JEF.INV.DESARROLLO"], ["ZZ01111", "Suarez, Sergio Edgardo", "GERENCIA DE FABRICA"], ["ZZ01120", "Peñalba, Gabriela Fernanda", "ADM.MANTENIMIENTO ND"], ["ZZ01160", "Marconi, Sandra Beatriz", "ADM.CONTROL CALID.ND"], ["ZZ01210", "Albornoz, Guillermo Javier", "ADM.CONTROL CALID.ND"], ["ZZ01216", "Dente, Alejandro", "ADM.INGENIERIA ND"], ["ZZ01255", "Da Silva, Pablo Alberto", "ADM.DEP.Y EXP.ND"], ["ZZ01259", "Krabs, Adolfo Ernesto", "ADM.CONTROL CALID.ND"], ["ZZ01268", "Perez, Daniel Osvaldo", "ADM.MANTENIMIENTO ND"], ["ZZ01277", "Lopez, Emilio Francisco", "ENVASADO Y EMPAQUE"], ["ZZ01291", "Martinez, Mario Gerardo", "ADM.DEP.Y EXP.ND"], ["ZZ01386", "Villotta, Hugo Enrique", "ADM.DEP.Y EXP.ND"], ["ZZ01399", "Gonzalez, Gustavo Osvaldo", "ADM.DEP.Y EXP.ND"], ["ZZ01400", "Martinez, Ruben Ernesto", "MANTEN.EQ.E INSTAL."], ["ZZ01469", "Fuentes, Ruben Ernesto", "ENVASADO Y EMPAQUE"], ["ZZ01514", "Schneider, Romeo", "ADM.RECEP.ALMAC.ND"], ["ZZ01517", "Roldan, Hernan Ricardo", "INYECCION Y SOPLADO"], ["ZZ01546", "Verzoletto, Cristian Adrian", "ADM.DEP.Y EXP.ND"], ["ZZ01555", "Cerri, Leonardo Rodolfo", "POMOS"], ["ZZ01588", "Aguirre, Walter Claudio", "ADM.TEJOS Y POMOS ND"], ["ZZ01590", "Mansilla, Pedro Osvaldo", "INYECCION Y SOPLADO"], ["ZZ01597", "Paccioretti, Juan Carlos", "ENVASADO Y EMPAQUE"], ["ZZ01604", "Ibarra, Omar Enrique", "ADM.MANTENIMIENTO ND"], ["ZZ01608", "Linches, Valerio Antonio", "INYECCION Y SOPLADO"], ["ZZ01611", "Viretti, Marcelo Carlos", "GERENCIA DE FABRICA"], ["ZZ01621", "Gnocato, Marcelo Jose", "GERENCIA DE FABRICA"], ["ZZ01635", "Bengochea, Jorge Alberto", "ENVASADO Y EMPAQUE"], ["ZZ01636", "Cabrera, Jorge Antonio", "FORMULADO"], ["ZZ01672", "Franco, Nora Lia", "M.CONT./SOP.ADM.FAB."], ["ZZ01676", "Ojeda, Jorge Luis", "ENVASADO Y EMPAQUE"], ["ZZ01713", "Fleitas, Victor Antonio", "MANT.TEJOS Y POMOS"], ["ZZ01714", "Ullmann, Roberto Carlos", "ADM.TEJOS Y POMOS ND"], ["ZZ01721", "Kalbin, Alcides Fabian", "POMOS"], ["ZZ01722", "Acuña, Horacio Felix", "TEJOS"], ["ZZ01730", "Jardon, Gerardo Andres", "POMOS"], ["ZZ01945", "Rios, Ruben Dario", "ADM.TEJOS Y POMOS ND"], ["ZZ01949", "Mendoza, Hugo Alberto", "POMOS"], ["ZZ01951", "Imidio, Nestor Cecilio", "POMOS"], ["ZZ01954", "Frena, Alejandro Diego", "ADM.TEJOS Y POMOS ND"], ["ZZ01955", "Romero, Juan Carlos", "ADM.TEJOS Y POMOS ND"], ["ZZ01958", "Broque, Ceferino Melchor", "POMOS"], ["ZZ01960", "Aguirrez, Alberto Oscar", "POMOS"], ["ZZ01962", "Gonzalez, Mario Alberto", "MANT.TEJOS Y POMOS"], ["ZZ01967", "Gorosito, Pedro Ramon", "POMOS"], ["ZZ01970", "Grendelmeier, Julio Hector", "ADM.RECEP.ALMAC.ND"], ["ZZ01971", "Diaz, Jorge Claudio", "POMOS"], ["ZZ01972", "Tavolini, Enrique Alejandro", "MANT.TEJOS Y POMOS"], ["ZZ01977", "Barrios, Jose Luis", "POMOS"], ["ZZ01980", "Almada, Hector", "POMOS"], ["ZZ01984", "Beloqui, Eduardo Ramon", "ADM.TEJOS Y POMOS ND"], ["ZZ01985", "Berton, Eduardo Aldo", "ADM.RECEP.ALMAC.ND"], ["ZZ01988", "Argüello, Celso Rene", "POMOS"], ["ZZ01989", "Bustamante, Mercedes Lucindo", "POMOS"], ["ZZ01991", "Barcala, Santiago David", "POMOS"], ["ZZ01998", "Membredes, Juan Eduardo", "MANT.TEJOS Y POMOS"], ["ZZ02032", "Vallory, Flavio Oscar", "MANT.TEJOS Y POMOS"], ["ZZ02035", "Veron, Maximiliano Martin", "POMOS"], ["ZZ02038", "Asselborn, Sergio Gaston", "MANT.MOLDES/MATRICES"], ["ZZ02041", "Bravo, Matias Alberto", "POMOS"], ["ZZ02072", "Lavric, Martin Valentin", "JEF.INV.DESARROLLO"], ["ZZ02264", "Leiva, Omar Alberto", "ADM.TEJOS Y POMOS ND"], ["ZZ02268", "Saavedra, Juan", "TEJOS"], ["ZZ02270", "Giannotti, Fabian Enrique", "MANT.TEJOS Y POMOS"], ["ZZ02271", "Mazur, Cesar Fernando", "POMOS"], ["ZZ02272", "Diaz, Victor Roger", "POMOS"], ["ZZ02295", "Mareco, Carlos Horacio", "INYECCION Y SOPLADO"], ["ZZ02299", "Magalhaes, Agustin Emiliano", "INYECCION Y SOPLADO"], ["ZZ02302", "Jambrina, Emilio Oscar", "ENVASADO Y EMPAQUE"], ["ZZ02304", "Dagostino, Leonardo Francisco", "ENVASADO Y EMPAQUE"], ["ZZ02311", "Romero, David Ismael", "INYECCION Y SOPLADO"], ["ZZ02312", "Antunez, Ramon Felix", "ADM.DEP.Y EXP.ND"], ["ZZ02316", "Añel, Leandro David", "INYECCION Y SOPLADO"], ["ZZ02319", "Membredes, Eduardo Nicolas", "ENVASADO Y EMPAQUE"], ["ZZ02324", "Martinez, Ricardo Daniel", "POMOS"], ["ZZ02329", "Monzon, Juan Carlos", "ADM.RECEP.ALMAC.ND"], ["ZZ02332", "Perez, Pablo Ricardo", "POMOS"], ["ZZ02335", "Veron, Carlos Ruben", "POMOS"], ["ZZ02337", "Uliambre, Sergio Andres", "MANT.TEJOS Y POMOS"], ["ZZ02338", "Machado, Jose Omar", "POMOS"], ["ZZ02348", "Mendez, Gaston Eduardo", "POMOS"], ["ZZ02349", "Lopez, Cesar Anibal", "ADM.TEJOS Y POMOS ND"], ["ZZ02356", "Miranda, Nelson Ramon", "POMOS"], ["ZZ02360", "Diaz, Abel Eduardo", "ADM.RECEP.ALMAC.ND"], ["ZZ02362", "Blasich, Vicente Crispin", "INYECCION Y SOPLADO"], ["ZZ02369", "Chamorro, Miguel Angel", "ADM.TEJOS Y POMOS ND"], ["ZZ02370", "Sequeira, Dardo Antonio", "INYECCION Y SOPLADO"], ["ZZ02379", "Araldi, Lucas Eduardo", "INYECCION Y SOPLADO"], ["ZZ02382", "Martinez, Diego Omar", "INYECCION Y SOPLADO"], ["ZZ02383", "Herrera, Marcelo Julian", "POMOS"], ["ZZ02384", "Soria, Pablo Sebastian", "MANT.TEJOS Y POMOS"], ["ZZ02387", "Cardenia, Jorge Eliseo", "POMOS"], ["ZZ02388", "Ott, Jose David", "ADM.RECEP.ALMAC.ND"], ["ZZ02390", "Grasso, Mariano Eduardo", "MANTEN.EQ.E INSTAL."], ["ZZ02393", "Solari, Angel Roberto", "INYECCION Y SOPLADO"], ["ZZ02396", "Pirez, Carlos Hernan", "ENVASADO Y EMPAQUE"], ["ZZ02397", "Demarco, Sebastian Andres", "POMOS"], ["ZZ02398", "Lopez, Guillermo Alejandro", "ADM.TEJOS Y POMOS ND"], ["ZZ02400", "Fernandez, Jorge Ernesto", "MANTEN.EQ.E INSTAL."], ["ZZ02403", "Caceres, Lucas Ariel", "ADM.CONTROL CALID.ND"], ["ZZ02414", "Alegre, Julio Gaston", "POMOS"], ["ZZ02434", "Nicoletti, Nestor Hugo", "PLANIFIC.PRODUCCION"], ["ZZ02448", "Zunino, Juan Manuel", "INYECCION Y SOPLADO"], ["ZZ02465", "Barrios, Leonardo Gaston", "ENVASADO Y EMPAQUE"], ["ZZ02489", "Petrucci, Analia Veronica", "ENVASADO Y EMPAQUE"], ["ZZ02490", "Perez, Orlando Javier", "ENVASADO Y EMPAQUE"], ["ZZ02500", "Espil, Elisabet Celeste", "ENVASADO Y EMPAQUE"], ["ZZ02504", "Morettoni, Nicolas", "MANT.MOLDES/MATRICES"], ["ZZ02505", "Martinez, Gerardo Ezequiel", "ADM.RECEP.ALMAC.ND"], ["ZZ02507", "Aranda, Juan Jose", "ENVASADO Y EMPAQUE"], ["ZZ02510", "Rosales, Nelson Walter", "ENVASADO Y EMPAQUE"], ["ZZ02513", "Albornoz, Alvaro Bruno", "INYECCION Y SOPLADO"], ["ZZ02514", "Ibarguren, Carlos Javier", "FORMULADO"], ["ZZ02515", "Ortiz, Marina Anahi", "ENVASADO Y EMPAQUE"], ["ZZ02518", "Bazan, Edgardo Anibal", "ENVASADO Y EMPAQUE"], ["ZZ02521", "Merino Chiosso, Mauricio Nahuel", "MANT.MOLDES/MATRICES"], ["ZZ02522", "Lujan, Ramon Manuel Avelino", "MANTEN.EQ.E INSTAL."], ["ZZ02528", "Leguizamo, Enrique Ignacio", "ENVASADO Y EMPAQUE"], ["ZZ02531", "Velazquez, Sebastian", "ADM.S.I.P.H.Y M.A."], ["ZZ02545", "Zapata, Gustavo Ezequiel", "ENVASADO Y EMPAQUE"], ["ZZ02548", "Gerard, Carina Alejandra", "LABORAT.FORM.Y SEMI."], ["ZZ02561", "Mazars, Ricardo Daniel", "POMOS"], ["ZZ02569", "Modrow, Pablo Damian", "FORMULADO"], ["ZZ02580", "Albornoz, Martin Leonardo", "POMOS"], ["ZZ02585", "Perugini, Maria Vanesa", "INYECCION Y SOPLADO"], ["ZZ02591", "Bejarano, Vicente Benjamin", "ENVASADO Y EMPAQUE"], ["ZZ02592", "Ghiozzi, Diego Martin", "ENVASADO Y EMPAQUE"], ["ZZ02594", "Guerra, Pablo Nicolas", "ENVASADO Y EMPAQUE"], ["ZZ02605", "Müller, Maria Victoria", "ENVASADO Y EMPAQUE"], ["ZZ02608", "Larregina, Cristian Marcos", "ADM.RECEP.ALMAC.ND"], ["ZZ02609", "Ibarra, Cristian Leonel", "ENVASADO Y EMPAQUE"], ["ZZ02620", "Brusa, Marcelo Adrian", "MANTEN.EQ.E INSTAL."], ["ZZ02625", "Montiel, Romina Susana", "ENVASADO Y EMPAQUE"], ["ZZ02628", "Garcia, Maria Rosa", "INYECCION Y SOPLADO"], ["ZZ02629", "Zarza, Claudio Gabriel", "INYECCION Y SOPLADO"], ["ZZ02636", "Barreiro, Daniel Alejandro", "ADM.TEJOS Y POMOS ND"], ["ZZ02639", "Negroni, Mauro Ezequiel", "POMOS"], ["ZZ02646", "Yaguar, Mirta Vanesa", "ENVASADO Y EMPAQUE"], ["ZZ02669", "Rondan, Oscar Jesus", "FORMULADO"], ["ZZ02680", "Claveria, Claudio Anibal Ignacio", "ENVASADO Y EMPAQUE"], ["ZZ02692", "Rivas, Romina Vanesa", "LABORAT.FORM.Y SEMI."], ["ZZ02702", "Ghibaude, Hernan Matias", "ADM.RECEP.ALMAC.ND"], ["ZZ02705", "Perez, Sandro Marcelo", "ENVASADO Y EMPAQUE"], ["ZZ02709", "Rolaiser, Pedro David", "ENVASADO Y EMPAQUE"], ["ZZ02710", "Montenegro, Diego Luciano", "ADM.CONTROL CALID.ND"], ["ZZ02713", "Santillan, Fabio Marcelo", "ENVASADO Y EMPAQUE"], ["ZZ02719", "Leone, Hernan Javier", "POMOS"], ["ZZ02720", "Gerber, Ignacio Matias", "TEJOS"], ["ZZ02744", "Insua, Agustin Manuel", "ADM.CONTROL CALID.ND"], ["ZZ02753", "Morales, Luis Javier", "MANTEN.EQ.E INSTAL."], ["ZZ02772", "Paez, Valeria Paola", "ADM.CONTROL CALID.ND"], ["ZZ02774", "Flores, Lorena Gladys", "LABORAT.FORM.Y SEMI."], ["ZZ02779", "Rios, Ricardo Javier", "INYECCION Y SOPLADO"], ["ZZ02780", "Barbosa, Cristian Julio Mariano", "POMOS"], ["ZZ02781", "Engel, Ricardo Fabricio", "MANT.TEJOS Y POMOS"], ["ZZ02784", "Bisignano, Alejandro Gabriel", "ADM.RRHH ZELAYA ND"], ["ZZ02789", "Escudero, Graciela Rosalia", "INYECCION Y SOPLADO"], ["ZZ02799", "Arias, Carlina Isabel", "ENVASADO Y EMPAQUE"], ["ZZ02806", "Tedesco, Jorge Luis", "ENVASADO Y EMPAQUE"], ["ZZ02807", "Miño, Carolina Alejandra", "INYECCION Y SOPLADO"], ["ZZ02818", "Mendez, Norberto Manuel", "ENVASADO Y EMPAQUE"], ["ZZ02819", "Aboyo, Diego Alejandro", "ENVASADO Y EMPAQUE"], ["ZZ02820", "Lezcano, Diego Martin", "FORMULADO"], ["ZZ02823", "Dragun, Horacio Sergio Gaston", "ENVASADO Y EMPAQUE"], ["ZZ02827", "Escalante, Eliseo Isaac", "POMOS"], ["ZZ02828", "Cabrera, Alfredo Bernabe", "ENVASADO Y EMPAQUE"], ["ZZ02832", "Luna, Mariano Javier", "MANTEN.EQ.E INSTAL."], ["ZZ02835", "Mansilo Zanon, Diego Hernan", "MANTEN.EQ.E INSTAL."], ["ZZ02837", "Martin, Lucia Magdalena", "M.CONT./SOP.ADM.FAB."], ["ZZ02841", "Podigue, Santiago Javier", "ADM.DEP.Y EXP.ND"], ["ZZ02844", "Borges, Jorge Ricardo", "ENVASADO Y EMPAQUE"], ["ZZ02852", "Rodriguez, Carolina", "ENVASADO Y EMPAQUE"], ["ZZ02855", "Isla, Gloria Veronica", "ENVASADO Y EMPAQUE"], ["ZZ02864", "Godoy, Emiliano Ricardo", "POMOS"], ["ZZ02865", "Guy, Alan Ivan", "POMOS"], ["ZZ02874", "Perez, Oscar Ismael", "POMOS"], ["ZZ02884", "Diaz, Miguel Adrian", "TEJOS"], ["ZZ02888", "Sosa, Walter David", "ENVASADO Y EMPAQUE"], ["ZZ02889", "Ferreyra, Jorge Andres", "POMOS"], ["ZZ02893", "Deandrea, Fabian Guillermo", "MANTEN.EQ.E INSTAL."], ["ZZ02895", "Paniagua, Rodolfo Daniel", "ENVASADO Y EMPAQUE"], ["ZZ02917", "Benitez Sprenk, Carla Soledad", "ENVASADO Y EMPAQUE"], ["ZZ02919", "Ordoñez, Mara Yanina", "ENVASADO Y EMPAQUE"], ["ZZ02929", "Gomez, Gustavo Daniel", "ADM.RECEP.ALMAC.ND"], ["ZZ02932", "Cano, Gustavo Adrian", "ADM.DEP.Y EXP.ND"], ["ZZ02951", "Moyano, Fernando Gabriel", "ADHESIVOS/ANEXOS ND"], ["ZZ02952", "Sequeira, Miguel Antonio", "FORMULADO"], ["ZZ02970", "Alvarez, Juan Andres", "ENVASADO Y EMPAQUE"], ["ZZ02973", "Sanchez, Diego Jose", "ENVASADO Y EMPAQUE"], ["ZZ02981", "Gonzalez, Pascual Adrian", "MANTEN.EQ.E INSTAL."], ["ZZ03062", "Silvestri, Cristian Hernan", "ENVASADO Y EMPAQUE"], ["ZZ03063", "Moreno, Miguel Angel", "INYECCION Y SOPLADO"], ["ZZ03066", "Dominguez, Fernando Nicolas", "INYECCION Y SOPLADO"], ["ZZ03067", "Eckerdt, Emilio Leon", "ADHESIVOS/ANEXOS ND"], ["ZZ03069", "Wiedmann, Cristian Federico", "ENVASADO Y EMPAQUE"], ["ZZ03072", "Reyn, Luciano Benjamin", "ADM.MANTENIMIENTO ND"], ["ZZ03082", "Zanotti, Carlos Alberto", "INYECCION Y SOPLADO"], ["ZZ03085", "Burgos, Jonatan Nahuel", "ENVASADO Y EMPAQUE"], ["ZZ03091", "Scapini, Silvio Ramon", "ADM.CONTROL CALID.ND"], ["ZZ03098", "Ferrari, Roberto Carlos", "FORMULADO"], ["ZZ03103", "Foi, Maria Ana", "GERENCIA DE FABRICA"], ["ZZ03106", "Colman, Leonardo Nicolas", "POMOS"], ["ZZ03110", "Cerio, Lucas Nicolas", "ENVASADO Y EMPAQUE"], ["ZZ03114", "Marron, Matias Ezequiel", "ADM.RECEP.ALMAC.ND"], ["ZZ03116", "Jerez, Guido Ivan", "TEJOS"], ["ZZ03124", "Benitez, Bruno Damian", "ADM.S.I.P.H.Y M.A."], ["ZZ03125", "Gimenez, Lisandro Alberto", "ADM.S.I.P.H.Y M.A."], ["ZZ03130", "Fusari, Javier Leandro", "GERENCIA DE FABRICA"], ["ZZ03139", "Alvarez, Rosalba Raquel", "M.CONT./SOP.ADM.FAB."], ["ZZ03143", "Salto, Nicolas Ezequiel", "POMOS"], ["ZZ03166", "Candia, Carlos Alejandro", "FORMULADO"], ["ZZ03184", "Paredes, Luciano Hernan", "PLANIFIC.PRODUCCION"], ["ZZ03194", "Almeida, Hector Alexis", "ADHESIVOS/ANEXOS ND"], ["ZZ03202", "Locoselli, Luciana Carla", "JEF.INV.DESARROLLO"], ["ZZ03223", "Gorrini, Diego Alberto", "GERENCIA DE FABRICA"], ["ZZ03228", "Gualchi, Maria Soledad", "GERENCIA DE FABRICA"], ["ZZ03233", "Ruiz Aquino, Alberto Federico", "MANTEN.EQ.E INSTAL."], ["ZZ03253", "Bertani, Christian Alberto", "MANTEN.EQ.E INSTAL."], ["ZZ03264", "Solari, Gaston Nicolas", "ADM.RRHH ZELAYA ND"], ["ZZ03267", "Cisterna, Daiana Mariela", "M.CONT./SOP.ADM.FAB."], ["ZZ03271", "Salerno, Valeria Soledad", "M.CONT./SOP.ADM.FAB."], ["ZZ03279", "Gomez, Walter Leandro", "JEF.INV.DESARROLLO"], ["ZZ03283", "Gerardi, Evangelina Margarita", "ADM.RRHH ZELAYA ND"], ["ZZ03284", "Pedrosa, Macarena", "ADM.RRHH ZELAYA ND"], ["ZZ03288", "Regner, Candela Maricel", "JEF.INV.DESARROLLO"], ["ZZ03312", "Galarza Cespedes, Cristian Enrique", "JEF.INV.DESARROLLO"], ["ZZ03317", "Chaij Deik, Jose Alfredo", "GERENCIA DE FABRICA"], ["ZZ03320", "Perdomenico, Julian", "JEF.INV.DESARROLLO"], ["ZZ03340", "Serrudo, Flavia Roxana", "ADM.RRHH ZELAYA ND"], ["ZZ03343", "Campero, Yesica Victoria", "ENVASADO Y EMPAQUE"], ["ZZ03351", "Sirake, Claudia Carina", "ADM.RRHH ZELAYA ND"], ["ZZ03354", "Diez, Cristian Alberto", "GERENCIA DE FABRICA"], ["ZZ03355", "Mansilla, Damian Fernando", "FORMULADO"], ["ZZ03357", "Salvoni, Alejandro Nicolás", "GERENCIA DE FABRICA"], ["ZZ03359", "Coronel, Matías Rodolfo", "ADM.MANTENIMIENTO ND"], ["ZZ03360", "Ali, Roberto Andres", "JEF.INV.DESARROLLO"], ["ZZ03362", "Demarchi, Nicolás Andrés", "ADM.RRHH ZELAYA ND"], ["ZZ03369", "Muller, Verónica", "JEF.INV.DESARROLLO"], ["ZZ03377", "Leiva, Jorge Alberto", "ADHESIVOS/ANEXOS ND"], ["ZZ03391", "Isnardo, Javier Raul Matias", "MANTEN.EQ.E INSTAL."], ["ZZ03393", "Saposnik, Lucas Martín", "JEF.INV.DESARROLLO"], ["ZZ03394", "Molina, Nadia Micaela", "GERENCIA DE FABRICA"], ["ZZ03396", "Barreyro, Emiliano Ezequiel", "MANTEN.EQ.E INSTAL."], ["ZZ03397", "Pereyra, Vanina Rosana", "ENVASADO Y EMPAQUE"], ["ZZ03399", "Frias, Gustavo Ariel", "ENVASADO Y EMPAQUE"], ["ZZ03401", "Circosta, Karina Noemi", "ENVASADO Y EMPAQUE"], ["ZZ03402", "Rojas, Marcos Daniel", "ENVASADO Y EMPAQUE"], ["ZZ03403", "Sosa, Marcelo Fabian", "ADM.CONTROL CALID.ND"], ["ZZ03410", "Juarez, Sergio Matias", "ENVASADO Y EMPAQUE"], ["ZZ03411", "Acosta, Yirca Mariel", "ENVASADO Y EMPAQUE"], ["ZZ03412", "Sanchez, Agustin Gabino", "ENVASADO Y EMPAQUE"], ["ZZ03414", "Alvarez, Gustavo Marcelo", "ADM.DEP.Y EXP.ND"], ["ZZ03415", "Villalba, Marcelo Alejandro", "ADM.DEP.Y EXP.ND"], ["ZZ03416", "Blanco, Daiana Belen", "ENVASADO Y EMPAQUE"], ["ZZ03417", "Maidana, Marcelo Damian", "ENVASADO Y EMPAQUE"], ["ZZ03418", "Suarez, Simon Javier", "GERENCIA DE FABRICA"], ["ZZ03419", "Losio, Nicolas Martin", "M.CONT./SOP.ADM.FAB."], ["ZZ03421", "Cisneros, Osvaldo David", "ADHESIVOS/ANEXOS ND"], ["ZZ03422", "Campillay, Diego Tomas", "ENVASADO Y EMPAQUE"], ["ZZ03423", "Velez, Fernando Joaquin", "ENVASADO Y EMPAQUE"], ["ZZ03428", "Belhart Tremoza, Mercedes Jazmin", "M.CONT./SOP.ADM.FAB."], ["ZZ03429", "Aguirre, Enrique Ignacio", "ENVASADO Y EMPAQUE"], ["ZZ03431", "Jacob, Enrique Alberto", "ENVASADO Y EMPAQUE"], ["ZZ03432", "Corvalan, Walter Fabian", "ADHESIVOS/ANEXOS ND"], ["ZZ03434", "Mazzeo, Agostina Maria", "JEF.INV.DESARROLLO"], ["ZZ03437", "Villalba, Kevin Alan", "JEF.INV.DESARROLLO"], ["ZZ03441", "Huberman, Matias", "JEF.INV.DESARROLLO"], ["ZZ03442", "Agüero, Milagros Mariana", "ENVASADO Y EMPAQUE"]];
+
+// ═══════════════════════════════════════════════════
+
+var modoActual='pedido', insSel={}, probSel={}, urg='', persona=null, fotoData='';
+
+// Foto: se achica a 1280px y se comprime antes de enviar
+$('foto').addEventListener('change',function(){
+  var f=this.files[0]; if(!f) return;
+  var img=new Image(), url=URL.createObjectURL(f);
+  img.onload=function(){
+    var k=Math.min(1,1280/Math.max(img.width,img.height));
+    var c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    fotoData=c.toDataURL('image/jpeg',0.7);
+    $('fotoImg').src=fotoData; $('fotoPrev').classList.remove('oculto');
+    URL.revokeObjectURL(url);
+  };
+  img.src=url;
+});
+function quitarFoto(){ fotoData=''; $('foto').value=''; $('fotoPrev').classList.add('oculto'); }
+function $(id){return document.getElementById(id)}
+
+$('bano').innerHTML='<option value="">— Elegí el baño —</option>'+BANOS.map(function(b){return '<option>'+b+'</option>'}).join('');
+$('listaInsumos').innerHTML=INSUMOS.map(function(n,i){return '<button class="op" id="i'+i+'" onclick="marcar(insSel,\'i\','+i+')">'+n+'</button>'}).join('');
+$('listaProblemas').innerHTML=PROBLEMAS.map(function(p,i){return '<button class="op" id="p'+i+'" onclick="marcar(probSel,\'p\','+i+')">'+p+'</button>'}).join('');
+
+function marcar(obj,pref,i){ obj[i]=!obj[i]; $(pref+i).classList.toggle('on',obj[i]); validar(); }
+function urgencia(el){
+  document.querySelectorAll('.urg .op').forEach(function(b){b.classList.remove('on')});
+  el.classList.add('on'); urg=el.dataset.u; validar();
+}
+function modo(m){
+  modoActual=m;
+  $('tabPedido').classList.toggle('on',m==='pedido');
+  $('tabRep').classList.toggle('on',m==='reporte');
+  $('bloquePedido').classList.toggle('oculto',m!=='pedido');
+  $('bloqueRep').classList.toggle('oculto',m!=='reporte');
+  validar();
+}
+function elegidos(lista,sel){ return lista.filter(function(_,i){return sel[i]}); }
+
+function validar(){
+  var ok=persona && $('bano').value;
+  if(modoActual==='pedido') ok=ok && elegidos(INSUMOS,insSel).length;
+  else ok=ok && elegidos(PROBLEMAS,probSel).length && urg;
+  $('btnEnviar').disabled=!ok;
+}
+$('bano').addEventListener('change',validar);
+$('legajo').addEventListener('input',function(){
+  var t=this.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  var v=t.replace(/\D/g,''), box=$('persona');
+  persona=null;
+  if(t.length>=4 && 'porteria'.indexOf(t)===0){
+    persona=['PORTERIA','Portería','Portería'];
+    box.className='persona ok'; box.innerHTML='<b>Portería</b>';
+  } else if(/^[a-z]/.test(t) && !/^zz\d/.test(t)){
+    box.className='persona no'; box.innerHTML='Legajo no encontrado';
+  } else if(v.length>=3){
+    var leg='ZZ'+('00000'+v).slice(-5);
+    persona=PERSONAL.filter(function(p){return p[0]===leg})[0]||null;
+    box.className='persona '+(persona?'ok':'no');
+    box.innerHTML=persona?'<b>'+esc(persona[1])+'</b><br>'+esc(persona[2]):'Legajo no encontrado';
+  } else box.className='persona oculto';
+  validar();
+});
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]}); }
+function dos(n){return (n<10?'0':'')+n}
+
+function enviar(){
+  var pedido=modoActual==='pedido';
+  var datos={
+    tipo: pedido?'Pedido':'Problema',
+    bano: $('bano').value,
+    items: pedido?elegidos(INSUMOS,insSel):elegidos(PROBLEMAS,probSel),
+    urgencia: pedido?'':urg,
+    nombre: persona[0]==='PORTERIA'?'Portería':persona[1]+' ('+persona[0]+')',
+    sector: persona[2],
+    detalle: (pedido?$('obsPedido'):$('detalle')).value.trim(),
+    foto: pedido?'':fotoData
+  };
+  var b=$('btnEnviar'); b.disabled=true; b.textContent='Enviando…';
+
+  fetch(URL_SCRIPT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(datos)})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res.ok) throw new Error(res.error);
+      datos.fotoUrl=res.fotoUrl||'';
+      mostrar(datos,res);
+    })
+    .catch(function(){
+      b.disabled=false; b.textContent='Enviar';
+      alert('No se pudo enviar. Revisá la conexión e intentá de nuevo.');
+    });
+}
+
+function mostrar(datos,res){
+  var h='';
+  if(res.repetidos.length){
+    h+='<div class="msg rep"><b>⚠️ Ya fue pedido y está pendiente:</b><br>'+
+      res.repetidos.map(function(r){return '• '+esc(r.item)+' — '+esc(r.hora)+' ('+esc(r.nombre)+')'}).join('<br>')+
+      '<br>No hace falta volver a pedirlo.</div>';
+  }
+  if(res.nuevos.length){
+    h+='<div class="msg ok"><b>✅ Registrado:</b><br>'+res.nuevos.map(function(n){return '• '+esc(n)}).join('<br>')+'</div>';
+    $('btnWa').classList.remove('oculto');
+    $('btnWa').onclick=function(){ abrirWa(datos,res.nuevos); };
+    $('avisoWa').textContent='Tocá el botón verde para avisar al grupo.';
+  }
+  $('mensajes').innerHTML=h;
+  $('form').classList.add('oculto');
+  $('resultado').classList.remove('oculto');
+  window.scrollTo(0,0);
+}
+
+function abrirWa(datos,nuevos){
+  var d=new Date(), L=[];
+  var pedido=datos.tipo==='Pedido';
+  L.push(pedido?'*PEDIDO HIGIENE BAÑOS*':((datos.urgencia==='URGENTE'?'🚨 ':'')+'*AVISO PROBLEMA BAÑO*'));
+  L.push('Fecha: '+dos(d.getDate())+'/'+dos(d.getMonth()+1)+'/'+d.getFullYear()+' '+dos(d.getHours())+':'+dos(d.getMinutes()));
+  L.push('Nombre: '+datos.nombre);
+  L.push('Sector: '+datos.sector);
+  L.push('Baño: '+datos.bano);
+  if(!pedido) L.push('Urgencia: '+datos.urgencia);
+  L.push('');
+  nuevos.forEach(function(n){L.push('- '+n)});
+  if(datos.detalle){ L.push(''); L.push((pedido?'Obs: ':'Detalle: ')+datos.detalle); }
+  if(datos.fotoUrl){ L.push(''); L.push('Foto: '+datos.fotoUrl); }
+  location.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(L.join('\n'));
+}
+</script>
+</body>
+</html>
